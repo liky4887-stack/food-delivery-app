@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { CartItem } from '@/context/CartContext';
+import { CartItem } from './CartContext';
 
 export interface Address {
   id: string;
@@ -9,6 +9,8 @@ export interface Address {
   zip: string;
   instructions: string;
 }
+
+export type DietaryPreference = 'vegetarian' | 'vegan' | 'gluten-free' | 'no-dairy' | 'no-nuts';
 
 export interface PastOrder {
   id: string;
@@ -27,8 +29,6 @@ export interface PastOrder {
   deliveryType: 'now' | 'scheduled';
 }
 
-export type DietaryPreference = 'vegetarian' | 'vegan' | 'gluten-free' | 'no-dairy' | 'no-nuts';
-
 interface UserContextType {
   favorites: string[];
   toggleFavorite: (restaurantId: string) => void;
@@ -37,7 +37,6 @@ interface UserContextType {
   orderHistory: PastOrder[];
   addOrder: (order: Omit<PastOrder, 'id' | 'placedAt'>) => string;
   updateOrderStage: (orderId: string, stage: number) => void;
-  reorder: (orderId: string) => void;
 
   addresses: Address[];
   selectedAddressId: string | null;
@@ -69,7 +68,7 @@ function loadState(): Partial<PersistedState> {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {
-    // ignore
+    return {};
   }
   return {};
 }
@@ -78,7 +77,7 @@ function saveState(state: PersistedState) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
-    // ignore
+    return;
   }
 }
 
@@ -137,11 +136,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const reorder = useCallback((orderId: string) => {
-    // The actual cart loading is handled in the component via CartContext
-    // This just finds the order -- the component does the rest
-  }, []);
-
   const addAddress = useCallback((addr: Omit<Address, 'id'>) => {
     const id = `addr-${Date.now()}`;
     setAddresses((prev) => [...prev, { ...addr, id }]);
@@ -173,9 +167,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         orderHistory,
         addOrder,
         updateOrderStage,
-        reorder,
-        addresses,
-        selectedAddressId,
         addAddress,
         removeAddress,
         selectAddress,
@@ -183,6 +174,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         dietaryPrefs,
         toggleDietaryPref,
         savedPromoCodes,
+        addresses,
+        selectedAddressId,
       }}
     >
       {children}

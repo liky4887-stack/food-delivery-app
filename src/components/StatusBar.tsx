@@ -1,14 +1,46 @@
-import { Signal, Wifi, BatteryFull } from 'lucide-react';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export function StatusBar() {
   return (
-    <div className="flex justify-between items-center px-7 pt-3 pb-1.5 bg-white shrink-0 z-30 relative">
-      <span className="text-sm font-bold text-neutral-900">9:41</span>
-      <div className="flex gap-1.5 items-center text-neutral-900">
-        <Signal className="w-3.5 h-3.5" strokeWidth={2.5} />
-        <Wifi className="w-3.5 h-3.5" strokeWidth={2.5} />
-        <BatteryFull className="w-4 h-4" strokeWidth={2.5} />
-      </div>
-    </div>
+    <View style={styles.container}>
+      <Text style={styles.time}>9:41</Text>
+      <View style={styles.icons}>
+        <MaterialCommunityIcons name="signal" size={14} color="#171717" style={styles.icon} />
+        <MaterialCommunityIcons name="wifi" size={14} color="#171717" style={styles.icon} />
+        <MaterialCommunityIcons name="battery-variant" size={16} color="#171717" style={styles.icon} />
+      </View>
+      <ExpoStatusBar style="dark" />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    paddingTop: 8,
+    paddingBottom: 4,
+    backgroundColor: '#FFFFFF',
+    elevation: 4,
+  },
+  time: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#171717',
+  },
+  icons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  icon: {
+    marginHorizontal: 2,
+  },
+});
+
+export default StatusBar;

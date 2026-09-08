@@ -1,196 +1,148 @@
-import { Receipt, ShoppingBag, RotateCcw, ChevronRight, Clock, Calendar, MapPin } from 'lucide-react';
-import { useNavigation } from '@/context/NavigationContext';
-import { useUser } from '@/context/UserContext';
-import { useCart } from '@/context/CartContext';
-import { useToast } from '@/context/ToastContext';
-import { getRestaurantById } from '@/data/restaurants';
-import { OrderTracking } from '@/screens/OrderTracking';
-import { StoreCard } from '@/components/StoreCard';
-import { restaurants } from '@/data/restaurants';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '../context/NavigationContext';
+import { useUser } from '../context/UserContext';
+import { useCart } from '../context/CartContext';
+import { getRestaurantById } from '../data/restaurants';
+import StoreCard from '../components/StoreCard';
 
 export function OrdersScreen() {
   const { state, navigateToScreen, navigateToRestaurant, confirmOrder } = useNavigation();
   const { orderHistory } = useUser();
   const { loadCartFromOrder } = useCart();
-  const { showToast } = useToast();
 
-  if (state.orderConfirmed && state.activeOrderId) {
-    const activeOrder = orderHistory.find((o) => o.id === state.activeOrderId);
-    if (activeOrder) {
-      return <OrderTracking order={activeOrder} />;
-    }
-  }
+  const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
 
-  const activeOrders = orderHistory.filter((o) => o.stage < 3);
-  const pastOrders = orderHistory.filter((o) => o.stage >= 3);
-
-  const handleReorder = (orderId: string) => {
-    const order = orderHistory.find((o) => o.id === orderId);
-    if (!order) return;
-    loadCartFromOrder(order.items);
-    showToast('Items added to cart');
-    navigateToRestaurant(order.restaurantId);
-  };
+  const activeOrders = orderHistory.filter(o => o.stage < 3);
+  const pastOrders = orderHistory.filter(o => o.stage >= 3);
 
   const formatTime = (timestamp: number) => {
-    const date = new Date(timestamp);
-    const now = Date.now();
-    const diff = now - timestamp;
+    const diff = Date.now() - timestamp;
     if (diff < 60000) return 'Just now';
     if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  const stageLabels = ['Placed', 'Preparing', 'On the Way', 'Delivered'];
+
+  const handleReorder = (orderId: string) => {
+    const order = orderHistory.find(o => o.id === orderId);
+    if (!order) return;
+    loadCartFromOrder(order.items);
+    navigateToRestaurant(order.restaurantId);
+  };
+
+  if (orderHistory.length === 0) {
+    return (
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <Text style={styles.title}>Orders</Text>
+        <View style={styles.emptyState}>
+          <View style={styles.emptyIcon}>
+            <Ionicons name="receipt-outline" size={48} color="#D1D5DB" />
+          </View>
+          <Text style={styles.emptyTitle}>No orders yet</Text>
+          <Text style={styles.emptySubtext}>Your past and active orders will appear here once you place them.</Text>
+          <View style={styles.restaurantList}>
+            <Text style={styles.sectionTitle}>Hungry?</Text>
+            {/* Popular restaurants */}
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  const currentOrders = activeTab === 'active' ? activeOrders : pastOrders;
+
   return (
-    <div className="px-5 pt-4 pb-2">
-      <h1 className="text-[22px] font-bold text-neutral-900 mb-4">Orders</h1>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <Text style={styles.title}>Orders</Text>
 
-      {orderHistory.length === 0 ? (
-        <>
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-20 h-20 rounded-full bg-neutral-100 flex items-center justify-center mb-4">
-              <Receipt className="w-10 h-10 text-neutral-300" />
-            </div>
-            <h2 className="text-[18px] font-bold text-neutral-900">No orders yet</h2>
-            <p className="text-[14px] text-neutral-500 mt-1.5 text-center max-w-[240px]">
-              Your past and active orders will appear here once you place them.
-            </p>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-[16px] font-bold text-neutral-900 mb-1">Hungry?</h3>
-            <p className="text-[13px] text-neutral-500 mb-3">Browse restaurants and start an order.</p>
-            <div className="space-y-3">
-              {restaurants.slice(0, 3).map((r) => (
-                <StoreCard key={r.id} restaurant={r} onClick={() => navigateToRestaurant(r.id)} />
-              ))}
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          {/* Active orders */}
-          {activeOrders.length > 0 && (
-            <div className="mb-5">
-              <h3 className="text-[16px] font-bold text-neutral-900 mb-3">Active Orders</h3>
-              <div className="space-y-3">
-                {activeOrders.map((order) => {
-                  const restaurant = getRestaurantById(order.restaurantId);
-                  return (
-                    <div
-                      key={order.id}
-                      onClick={() => confirmOrder(order.id)}
-                      className="bg-primary-50 rounded-2xl p-4 border border-primary-200 cursor-pointer active:scale-[0.98] transition-transform"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2.5">
-                          {restaurant && (
-                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-neutral-200 shrink-0">
-                              <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-bold text-[15px] text-neutral-900">{order.restaurantName}</div>
-                            <div className="text-[12px] text-neutral-500">{formatTime(order.placedAt)}</div>
-                          </div>
-                        </div>
-                        <span className="bg-primary-500 text-white px-2.5 py-1 rounded-full text-[11px] font-bold">
-                          {order.stage === 0 ? 'Placed' : order.stage === 1 ? 'Preparing' : order.stage === 2 ? 'On the Way' : 'Delivered'}
-                        </span>
-                      </div>
-                      <div className="text-[13px] text-neutral-600">
-                        {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
-                      </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="font-bold text-[15px] text-neutral-900">${order.total.toFixed(2)}</span>
-                        <span className="text-primary-500 text-[13px] font-semibold flex items-center gap-1">
-                          Track Order <ChevronRight className="w-4 h-4" />
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+      <View style={styles.tabRow}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'active' && styles.tabActive]}
+          onPress={() => setActiveTab('active')}
+        >
+          <Text style={[styles.tabText, activeTab === 'active' && styles.tabTextActive]}>Active</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'past' && styles.tabActive]}
+          onPress={() => setActiveTab('past')}
+        >
+          <Text style={[styles.tabText, activeTab === 'past' && styles.tabTextActive]}>Past</Text>
+        </TouchableOpacity>
+      </View>
 
-          {/* Past orders */}
-          {pastOrders.length > 0 && (
-            <div>
-              <h3 className="text-[16px] font-bold text-neutral-900 mb-3">Past Orders</h3>
-              <div className="space-y-3">
-                {pastOrders.map((order) => {
-                  const restaurant = getRestaurantById(order.restaurantId);
-                  return (
-                    <div key={order.id} className="bg-neutral-50 rounded-2xl p-4 border border-neutral-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2.5">
-                          {restaurant && (
-                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-neutral-200 shrink-0">
-                              <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-bold text-[15px] text-neutral-900">{order.restaurantName}</div>
-                            <div className="text-[12px] text-neutral-500 flex items-center gap-1">
-                              {order.deliveryType === 'scheduled' && order.scheduledFor ? (
-                                <>
-                                  <Calendar className="w-3 h-3" />
-                                  {order.scheduledFor}
-                                </>
-                              ) : (
-                                <>
-                                  <Clock className="w-3 h-3" />
-                                  {formatTime(order.placedAt)}
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <span className="bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-[11px] font-bold">
-                          Delivered
-                        </span>
-                      </div>
-                      <div className="text-[13px] text-neutral-600 mb-2">
-                        {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
-                      </div>
-                      {order.address && (
-                        <div className="text-[12px] text-neutral-400 flex items-center gap-1 mb-2">
-                          <MapPin className="w-3 h-3" />
-                          {order.address.street}
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="font-bold text-[15px] text-neutral-900">${order.total.toFixed(2)}</span>
-                        <button
-                          onClick={() => handleReorder(order.id)}
-                          className="bg-neutral-900 text-white rounded-full px-4 py-2 text-[13px] font-semibold flex items-center gap-1.5 active:scale-95 transition-transform"
-                        >
-                          <RotateCcw className="w-3.5 h-3.5" />
-                          Reorder
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {activeOrders.length === 0 && pastOrders.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <ShoppingBag className="w-12 h-12 text-neutral-200 mb-3" />
-              <p className="text-[15px] text-neutral-500">No orders yet</p>
-              <button
-                onClick={() => navigateToScreen('home')}
-                className="mt-4 bg-primary-500 text-white rounded-full px-6 py-3 font-semibold text-[15px] active:scale-95 transition-transform"
-              >
-                Browse Restaurants
-              </button>
-            </div>
-          )}
-        </>
-      )}
-    </div>
+      <View style={styles.list}>
+        {currentOrders.map(order => {
+          const restaurant = getRestaurantById(order.restaurantId);
+          return (
+            <TouchableOpacity
+              key={order.id}
+              style={styles.orderCard}
+              onPress={() => confirmOrder(order.id)}
+            >
+              <View style={styles.orderHeader}>
+                {restaurant && (
+                  <Image source={{ uri: restaurant.image }} style={styles.restaurantImage} />
+                )}
+                <View style={styles.orderInfo}>
+                  <Text style={styles.orderRestaurant}>{order.restaurantName}</Text>
+                  <Text style={styles.orderTime}>{formatTime(order.placedAt)}</Text>
+                </View>
+                <View style={[styles.stageBadge, { backgroundColor: order.stage === 3 ? '#DCFCE7' : '#FEF2F2' }]}>
+                  <Text style={[styles.stageText, { color: order.stage === 3 ? '#16A34A' : '#DC2626' }]}>
+                    {stageLabels[order.stage]}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.orderItems}>
+                {order.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+              </Text>
+              <View style={styles.orderFooter}>
+                <Text style={styles.orderTotal}>${order.total.toFixed(2)}</Text>
+                {order.stage < 3 && (
+                  <TouchableOpacity onPress={() => handleReorder(order.id)}>
+                    <Text style={styles.reorderText}>Reorder</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: 20, paddingTop: 16, backgroundColor: '#F5F5F5' },
+  title: { fontSize: 24, fontWeight: '700', color: '#171717', marginBottom: 16 },
+  tabRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  tab: { flex: 1, paddingVertical: 12, alignItems: 'center', backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB' },
+  tabActive: { backgroundColor: '#171717' },
+  tabText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
+  tabTextActive: { color: 'white' },
+  list: { gap: 12, marginBottom: 32 },
+  emptyState: { alignItems: 'center', paddingVertical: 48 },
+  emptyIcon: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
+  emptyTitle: { fontSize: 20, fontWeight: '700', color: '#171717', marginBottom: 8 },
+  emptySubtext: { fontSize: 14, color: '#6B7280', textAlign: 'center', paddingHorizontal: 40, marginBottom: 24 },
+  restaurantList: { width: '100%', marginTop: 16 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#171717', marginBottom: 12 },
+  orderCard: { backgroundColor: 'white', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E5E7EB', gap: 8 },
+  orderHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  restaurantImage: { width: 48, height: 48, borderRadius: 12 },
+  orderInfo: { flex: 1 },
+  orderRestaurant: { fontSize: 15, fontWeight: '700', color: '#171717' },
+  orderTime: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+  stageBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  stageText: { fontSize: 12, fontWeight: '600' },
+  orderItems: { fontSize: 13, color: '#6B7280' },
+  orderFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
+  orderTotal: { fontSize: 16, fontWeight: '700', color: '#171717' },
+  reorderText: { fontSize: 14, fontWeight: '600', color: '#FF2B2B' },
+});
+
+export default OrdersScreen;

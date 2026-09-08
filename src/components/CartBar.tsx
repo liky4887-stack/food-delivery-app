@@ -1,37 +1,114 @@
-import { ShoppingCart, ChevronRight } from 'lucide-react';
-import { useNavigation } from '@/context/NavigationContext';
-import { useCart } from '@/context/CartContext';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useCart } from '../context/CartContext';
+import { useNavigation } from '../context/NavigationContext';
 
-export function CartBar({ restaurantId }: { restaurantId: string }) {
-  const { navigateToScreen } = useNavigation();
+interface CartBarProps {
+  restaurantId: string;
+}
+
+export function CartBar({ restaurantId }: CartBarProps) {
   const { items, subtotal } = useCart();
+  const { navigateToScreen } = useNavigation();
 
-  const cartItemsForThisRestaurant = items.filter((i) => i.restaurantId === restaurantId);
-  const count = cartItemsForThisRestaurant.reduce((sum, i) => sum + i.quantity, 0);
-  const restaurantSubtotal = cartItemsForThisRestaurant.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const cartItemsForRestaurant = items.filter(item => item.restaurantId === restaurantId);
+  const count = cartItemsForRestaurant.reduce((sum, item) => sum + item.quantity, 0);
+  const restaurantSubtotal = cartItemsForRestaurant.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   if (count === 0) return null;
 
   return (
-    <div className="absolute bottom-[72px] left-3 right-3 z-20 animate-slide-up">
-      <button
-        onClick={() => navigateToScreen('cart')}
-        className="w-full bg-primary-500 text-white rounded-2xl px-4 py-3.5 flex items-center justify-between shadow-lg active:scale-[0.98] transition-transform"
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.cartButton}
+        onPress={() => navigateToScreen('cart')}
       >
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <ShoppingCart className="w-5 h-5" />
-            <span className="absolute -top-1.5 -right-1.5 bg-white text-primary-500 rounded-full w-4 h-4 text-[10px] font-bold flex items-center justify-center">
-              {count}
-            </span>
-          </div>
-          <span className="text-[15px] font-semibold">View Cart</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="text-[15px] font-bold">${restaurantSubtotal.toFixed(2)}</span>
-          <ChevronRight className="w-4 h-4" />
-        </div>
-      </button>
-    </div>
+        <View style={styles.cartContent}>
+          <View style={styles.cartIconContainer}>
+            <Ionicons name="cart" size={24} color="white" />
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{count}</Text>
+            </View>
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.viewCartText}>View Cart</Text>
+            <Text style={styles.totalText}>${restaurantSubtotal.toFixed(2)}</Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color="white" />
+      </TouchableOpacity>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 72,
+    left: 16,
+    right: 16,
+    zIndex: 20,
+    elevation: 8,
+  },
+  cartButton: {
+    backgroundColor: '#FF2B2B',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cartContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  cartIconContainer: {
+    position: 'relative',
+    width: 40,
+    height: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  textContainer: {
+    flex: 1,
+  },
+  viewCartText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  totalText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+});
+
+export default CartBar;

@@ -1,226 +1,232 @@
-import { useEffect, useState } from 'react';
-import { CheckCircle2, ChefHat, Bike, Package, Phone, MessageCircle, Star, MapPin, Navigation } from 'lucide-react';
-import { useUser, PastOrder } from '@/context/UserContext';
-import { useNavigation } from '@/context/NavigationContext';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '../context/NavigationContext';
+import { useUser, PastOrder } from '../context/UserContext';
 
 export function OrderTracking({ order }: { order: PastOrder }) {
   const { updateOrderStage } = useUser();
   const { navigateToScreen } = useNavigation();
   const [stage, setStage] = useState(order.stage);
   const [courierProgress, setCourierProgress] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const stages = [
-    { icon: CheckCircle2, label: 'Order Placed', desc: 'Restaurant received your order' },
-    { icon: ChefHat, label: 'Preparing', desc: 'Your food is being made' },
-    { icon: Bike, label: 'On the Way', desc: 'Courier is heading to you' },
-    { icon: Package, label: 'Delivered', desc: 'Enjoy your meal!' },
+    { icon: MaterialCommunityIcons, iconName: 'check-circle-outline', label: 'Order Placed', desc: 'Restaurant received your order', color: '#6B7280' },
+    { icon: MaterialCommunityIcons, iconName: 'chef-hat', label: 'Preparing', desc: 'Your food is being made', color: '#FF2B2B' },
+    { icon: MaterialCommunityIcons, iconName: 'bike', label: 'On the Way', desc: 'Courier is heading to you', color: '#171717' },
+    { icon: MaterialCommunityIcons, iconName: 'package', label: 'Delivered', desc: 'Enjoy your meal!', color: '#10B981' },
   ];
 
   // Auto-advance stages
   useEffect(() => {
-    if (stage >= 3) return;
+    if (stage >= 3) {
+      setIsAnimating(false);
+      return;
+    }
+    setIsAnimating(true);
     const timer = setTimeout(() => {
       const next = stage + 1;
       setStage(next);
       updateOrderStage(order.id, next);
-    }, stage === 0 ? 2500 : stage === 1 ? 4000 : 6000);
+    }, stage === 0 ? 3000 : stage === 1 ? 5000 : 7000);
     return () => clearTimeout(timer);
   }, [stage, order.id, updateOrderStage]);
 
-  // Animate courier progress when on the way
+  // Animate courier progress
   useEffect(() => {
-    if (stage < 2) return;
+    if (stage < 2) {
+      setCourierProgress(0);
+      return;
+    }
     if (stage >= 3) {
       setCourierProgress(100);
       return;
     }
     const interval = setInterval(() => {
-      setCourierProgress((p) => Math.min(p + 1, 95));
-    }, 100);
+      setCourierProgress((p) => Math.min(p + 2, 95));
+    }, 150);
     return () => clearInterval(interval);
   }, [stage]);
 
-  const eta = stage >= 3 ? 'Delivered' : stage === 2 ? `${Math.max(2, 15 - Math.floor(courierProgress / 8))} min` : '25-35 min';
+  const eta = stage >= 3 ? 'Delivered' : stage === 2 ? `${Math.max(2, 15 - Math.floor(courierProgress / 10))} min` : '25-35 min';
 
   return (
-    <div className="px-5 pt-4 pb-2">
-      {/* Header */}
-      <div className="flex flex-col items-center text-center mb-4">
-        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 animate-bounce-in ${stage >= 3 ? 'bg-green-50' : 'bg-primary-50'}`}>
-          {stage >= 3 ? (
-            <Package className="w-9 h-9 text-green-500" />
-          ) : (
-            <ChefHat className="w-9 h-9 text-primary-500" />
-          )}
-        </div>
-        <h1 className="text-[22px] font-bold text-neutral-900">
-          {stage >= 3 ? 'Order Delivered!' : stage === 0 ? 'Order Confirmed!' : stage === 1 ? 'Preparing...' : 'On the Way!'}
-        </h1>
-        <p className="text-[14px] text-neutral-500 mt-1">{order.restaurantName}</p>
-      </div>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header with status */}
+      <View style={styles.header}>
+        {/* Status circle */}
+        <View style={[styles.statusCircle, { backgroundColor: stage >= 3 ? '#10B981' : stage >= 2 ? '#F59E0B' : stage >= 1 ? '#FF2B2B' : '#6B7280' }]}>
+          {stages[stage].icon ? <stages[stage].icon name={stages[stage].iconName} size={32} color={stages[stage].color} /> : null}
+        </View>
+        <Text style={styles.statusLabel}>{stageLabels[stage]}</Text>
 
-      {/* Map area with animated courier */}
-      <div className="relative h-40 bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl mb-4 overflow-hidden">
+        <Text style={styles.eta}>Estimated: {eta}</Text>
+      </View>
+
+      {/* Map area */}
+      <View style={styles.mapArea}>
         {/* Route line */}
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 350 160" preserveAspectRatio="none">
-          <path
-            d="M 30 120 Q 100 80 175 90 T 320 40"
-            fill="none"
-            stroke="#ff2b2b"
-            strokeWidth="3"
-            strokeDasharray="8 4"
-            opacity="0.4"
-          />
-        </svg>
+        <View style={styles.routeLine} />
 
         {/* Restaurant marker */}
-        <div className="absolute bottom-4 left-3 flex flex-col items-center">
-          <div className="w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center">
-            <ChefHat className="w-5 h-5 text-primary-500" />
-          </div>
-          <div className="text-[10px] font-bold text-neutral-700 mt-0.5 bg-white/80 px-1.5 rounded">Restaurant</div>
-        </div>
+        <View style={styles.marker}>
+          <MaterialCommunityIcons name="chef-hat" size={24} color="#FF2B2B" />
+          <Text style={styles.markerText}>Restaurant</Text>
+        </View>
 
         {/* Destination marker */}
-        <div className="absolute top-3 right-3 flex flex-col items-center">
-          <div className="w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-primary-500" />
-          </div>
-          <div className="text-[10px] font-bold text-neutral-700 mt-0.5 bg-white/80 px-1.5 rounded">You</div>
-        </div>
+        <View style={styles.marker}>
+          <MaterialCommunityIcons name="map-marker" size={24} color="#171717" />
+          <Text style={styles.markerText}>You</Text>
+        </View>
 
         {/* Animated courier */}
         {stage >= 2 && stage < 3 && (
-          <div
-            className="absolute transition-all duration-500 ease-linear"
-            style={{
-              left: `${10 + courierProgress * 0.75}%`,
-              top: `${120 - courierProgress * 0.7}px`,
-            }}
-          >
-            <div className="w-10 h-10 rounded-full bg-primary-500 shadow-lg flex items-center justify-center animate-bounce-in">
-              <Bike className="w-5 h-5 text-white" />
-            </div>
-          </div>
+          <View style={styles.courier}>
+            <MaterialCommunityIcons name="bike" size={20} color="#FF2B2B" />
+          </View>
         )}
 
         {/* ETA overlay */}
-        <div className="absolute top-2 left-2 bg-white/90 rounded-xl px-3 py-1.5 shadow-sm">
-          <div className="text-[11px] text-neutral-500">Estimated Arrival</div>
-          <div className="text-[15px] font-bold text-neutral-900">{eta}</div>
-        </div>
-      </div>
-
-      {/* Courier info */}
-      {stage >= 2 && stage < 3 && (
-        <div className="flex items-center gap-3 bg-neutral-50 rounded-2xl p-3.5 mb-4 animate-slide-up border border-neutral-200">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-[14px]">
-            M
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-[14px] text-neutral-900">Marcus T.</div>
-            <div className="flex items-center gap-1 text-[12px] text-neutral-500">
-              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-              4.9 · E-Bike
-            </div>
-          </div>
-          <button className="w-9 h-9 rounded-full bg-white border border-neutral-200 flex items-center justify-center active:scale-90 transition-transform">
-            <MessageCircle className="w-5 h-5 text-neutral-600" />
-          </button>
-          <button className="w-9 h-9 rounded-full bg-primary-500 flex items-center justify-center active:scale-90 transition-transform">
-            <Phone className="w-5 h-5 text-white" />
-          </button>
-        </div>
-      )}
+        <View style={styles.etaOverlay}>
+          <Text style={styles.etaText}>Estimated Arrival</Text>
+          <Text style={styles.etaValue}>{eta}</Text>
+        </View>
+      </View>
 
       {/* Progress tracker */}
-      <div className="bg-neutral-50 rounded-2xl p-4 mb-4">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-[15px] font-bold text-neutral-900">Order Progress</h3>
-          <span className="text-[13px] font-bold text-primary-500">{Math.round((stage / 3) * 100)}%</span>
-        </div>
-        <div className="w-full h-2 bg-neutral-200 rounded-full overflow-hidden mb-4">
-          <div
-            className="h-full bg-primary-500 rounded-full transition-all duration-500"
-            style={{ width: `${(stage / 3) * 100}%` }}
-          />
-        </div>
+      <View style={styles.progressTracker}>
+        <View style={styles.progressLabel}>Order Progress</View>
+        <View style={styles.progressBarBackground}>
+          <View style={[
+            styles.progressBarFill,
+            { width: `${(stage / 3) * 100}%` },
+          ]} />
+        </View>
+        <Text style={styles.progressPercentage}>{Math.round((stage / 3) * 100)}%</Text>
 
-        <div className="space-y-0">
+        <View style={styles.progressSteps}>
           {stages.map((s, idx) => {
             const Icon = s.icon;
             const isActive = idx <= stage;
             const isCurrent = idx === stage;
             return (
-              <div key={idx} className="flex items-start gap-3">
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
-                      isActive
-                        ? isCurrent
-                          ? 'bg-primary-500 text-white animate-pulse'
-                          : 'bg-primary-500 text-white'
-                        : 'bg-neutral-200 text-neutral-400'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  {idx < stages.length - 1 && (
-                    <div className={`w-0.5 h-6 ${idx < stage ? 'bg-primary-500' : 'bg-neutral-200'}`} />
-                  )}
-                </div>
-                <div className="pt-1.5 pb-3">
-                  <div className={`text-[15px] font-semibold ${isActive ? 'text-neutral-900' : 'text-neutral-400'}`}>
-                    {s.label}
-                  </div>
-                  <div className="text-[12px] text-neutral-500">{s.desc}</div>
-                </div>
-              </div>
+              <View key={idx} style={[
+                styles.progressStep,
+                { backgroundColor: isActive ? (isCurrent ? '#FF2B2B' : '#171717') : '#E5E7EB' },
+              ]}>
+                {Icon ? <Icon name={s.iconName} size={20} color={isActive ? s.color : '#6B7280'} /> : null}
+                <Text style={styles.stepLabel}>{s.label}</Text>
+              </View>
             );
           })}
-        </div>
-      </div>
-
-      {/* Delivery address */}
-      <div className="bg-neutral-50 rounded-2xl p-4 mb-4 border border-neutral-200">
-        <div className="flex items-start gap-3">
-          <MapPin className="w-5 h-5 text-primary-500 shrink-0 mt-0.5" />
-          <div>
-            <div className="font-semibold text-[14px] text-neutral-900">{order.address.label}</div>
-            <div className="text-[13px] text-neutral-600">{order.address.street}</div>
-            <div className="text-[13px] text-neutral-600">{order.address.city} {order.address.zip}</div>
-            {order.address.instructions && (
-              <div className="text-[12px] text-neutral-400 mt-1 italic">Note: {order.address.instructions}</div>
-            )}
-          </div>
-        </div>
-      </div>
+        </View>
+      </View>
 
       {/* Order details */}
-      <div className="mb-4">
-        <h3 className="text-[15px] font-bold text-neutral-900 mb-2.5">Order Details</h3>
-        <div className="bg-neutral-50 rounded-2xl p-4 space-y-2.5">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex justify-between text-[14px]">
-              <span className="text-neutral-700">{item.quantity}x {item.name}</span>
-              <span className="text-neutral-900 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
-            </div>
+      <View style={styles.orderDetails}>
+        <Text style={styles.detailsTitle}>Order Details</Text>
+        <View style={styles.detailsGrid}>
+          {order.items.map((item, idx) => (
+            <View key={item.id} style={styles.detailItem}>
+              <Text style={styles.detailName}>{item.name}</Text>
+              <Text style={styles.detailQuantity}>{item.quantity}x</Text>
+              <Text style={styles.detailPrice}>${(item.price * item.quantity).toFixed(2)}</Text>
+            </View>
           ))}
-          <div className="border-t border-neutral-200 pt-2.5 mt-1.5">
-            <div className="flex justify-between font-bold text-[16px] text-neutral-900">
-              <span>Total</span>
-              <span>${order.total.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+        </View>
+        <View style={styles.divider} />
+        <View style={styles.detailsGrid}>
+          <Text style={styles.detailLabel}>Total</Text>
+          <Text style={styles.detailValue}>${order.total.toFixed(2)}</Text>
+        </View>
+      </View>
 
-      <button
-        onClick={() => navigateToScreen('home')}
-        className="w-full bg-primary-500 text-white rounded-full py-4 font-bold text-[16px] active:scale-[0.98] transition-transform shadow-sm mb-3"
-      >
-        Back to Home
-      </button>
-    </div>
+      {/* Delivery address */}
+      <View style={styles.deliveryAddress}>
+        <Text style={styles.addressTitle}>Delivery Address</Text>
+        <View style={styles.addressItems}>
+          <Text style={styles.addressLabel}>{order.address.label}</Text>
+          <Text style={styles.addressStreet}>{order.address.street}</Text>
+          <Text style={styles.addressCity}>{order.address.city} {order.address.zip}</Text>
+          {order.address.instructions && (
+            <Text style={styles.addressInstructions}>Note: {order.address.instructions}</Text>
+          )}
+        </View>
+      </View>
+
+      {/* Action button */}
+      {stage < 3 && (
+        <TouchableOpacity style={styles.continueButton} onPress={() => navigateToScreen('home')}>
+          <Text style={styles.continueText}>Continue Ordering</Text>
+        </TouchableOpacity>
+      )}
+    </ScrollView>
   );
 }
+
+const stageLabels = ['Placed', 'Preparing', 'On the Way', 'Delivered'];
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F5F5F5' },
+  header: { padding: 20, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
+  statusCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  statusLabel: { fontSize: 16, fontWeight: '700', color: '#171717' },
+  eta: { fontSize: 13, color: '#6B7280', marginTop: 4 },
+  mapArea: { padding: 20, backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E5E7EB', marginTop: 20 },
+  routeLine: { height: 4, backgroundColor: '#E5E7EB' },
+  marker: { flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 8 },
+  markerText: { fontSize: 12, color: '#6B7280' },
+  courier: {
+    position: 'absolute',
+    bottom: 0,
+    left: '50%',
+    transform: [{ translateX: -16 }],
+    width: 32,
+    height: 32,
+    backgroundColor: '#FF2B2B',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  etaOverlay: { padding: 8, backgroundColor: 'rgba(0,0,0,0.5)' },
+  etaText: { fontSize: 12, color: 'white' },
+  etaValue: { fontSize: 14, fontWeight: '700', color: 'white' },
+  progressTracker: { padding: 20 },
+  progressLabel: { fontSize: 14, color: '#6B7280', marginBottom: 8 },
+  progressBarBackground: { height: 8, backgroundColor: '#E5E7EB', borderRadius: 4 },
+  progressBarFill: { height: '100%', backgroundColor: '#FF2B2B', borderRadius: 4 },
+  progressPercentage: { fontSize: 12, color: '#6B7280', marginTop: 4, alignSelf: 'center' },
+  progressSteps: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 12 },
+  progressStep: { width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  orderDetails: { padding: 20, backgroundColor: 'white', marginTop: 20 },
+  detailsTitle: { fontSize: 18, fontWeight: '700', color: '#171717', marginBottom: 12 },
+  detailsGrid: { gap: 16, marginBottom: 12 },
+  detailItem: { flexDirection: 'row', justifyContent: 'space-between' },
+  detailName: { fontSize: 14, color: '#171717' },
+  detailQuantity: { fontSize: 12, color: '#6B7280' },
+  detailPrice: { fontSize: 14, fontWeight: '700', color: '#171717' },
+  divider: { height: 1, backgroundColor: '#E5E7EB', marginVertical: 8 },
+  detailsGrid2: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  detailLabel: { fontSize: 14, color: '#6B7280' },
+  detailValue: { fontSize: 16, fontWeight: '700', color: '#171717' },
+  deliveryAddress: { padding: 20, backgroundColor: 'white', marginTop: 20 },
+  addressTitle: { fontSize: 16, fontWeight: '700', color: '#171717', marginBottom: 8 },
+  addressItems: { gap: 4 },
+  addressLabel: { fontSize: 14, color: '#171717' },
+  addressStreet: { fontSize: 13, color: '#6B7280' },
+  addressCity: { fontSize: 13, color: '#6B7280' },
+  addressInstructions: { fontSize: 12, color: '#6B7280', fontStyle: 'italic' },
+  continueButton: { backgroundColor: '#FF2B2B', padding: 16, borderRadius: 12, alignItems: 'center', margin: 20 },
+  continueText: { color: 'white', fontSize: 16, fontWeight: '700' },
+});
+
+export default OrderTracking;

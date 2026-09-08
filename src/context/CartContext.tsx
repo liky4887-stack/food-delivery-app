@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { MenuItem } from '@/data/restaurants';
 
 export interface CartItem {
   id: string;
@@ -36,9 +35,9 @@ interface CartContextType {
   addItem: (
     restaurantId: string,
     restaurantName: string,
-    item: MenuItem,
+    item: any,
     quantity: number,
-    selectedCustomizations: { groupName: string; optionLabel: string; optionPrice: number }[],
+    selectedCustomizations: any[],
     specialInstructions: string
   ) => void;
   removeItem: (cartItemId: string) => void;
@@ -60,7 +59,7 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | null>(null);
 
-function generateCartItemId(restaurantId: string, itemId: string, customizations: { optionLabel: string }[], instructions: string): string {
+function generateCartItemId(restaurantId: string, itemId: string, customizations: any[], instructions: string): string {
   const customizationKey = customizations.map((c) => c.optionLabel).join(',');
   return `${restaurantId}-${itemId}-${customizationKey}-${instructions}`;
 }
@@ -75,9 +74,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     (
       restaurantId: string,
       restaurantName: string,
-      item: MenuItem,
+      item: any,
       quantity: number,
-      selectedCustomizations: { groupName: string; optionLabel: string; optionPrice: number }[],
+      selectedCustomizations: any[],
       specialInstructions: string
     ) => {
       const customizationPrice = selectedCustomizations.reduce((sum, c) => sum + c.optionPrice, 0);

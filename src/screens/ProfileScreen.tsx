@@ -1,172 +1,135 @@
-import { Heart, MapPin, Tag, Leaf, Settings, ChevronRight, ShoppingBag, Award, TrendingUp, Star } from 'lucide-react';
-import { useNavigation } from '@/context/NavigationContext';
-import { useUser, DietaryPreference } from '@/context/UserContext';
-import { restaurants } from '@/data/restaurants';
-import { StoreCard } from '@/components/StoreCard';
-
-const dietaryOptions: { id: DietaryPreference; label: string; icon: typeof Leaf }[] = [
-  { id: 'vegetarian', label: 'Vegetarian', icon: Leaf },
-  { id: 'vegan', label: 'Vegan', icon: Leaf },
-  { id: 'gluten-free', label: 'Gluten-Free', icon: Leaf },
-  { id: 'no-dairy', label: 'No Dairy', icon: Leaf },
-  { id: 'no-nuts', label: 'No Nuts', icon: Leaf },
-];
+import React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, useUser } from '../context/NavigationContext';
 
 export function ProfileScreen() {
-  const { state, navigateToScreen, navigateToRestaurant, setShowAddressPicker } = useNavigation();
-  const { favorites, dietaryPrefs, toggleDietaryPref, orderHistory, addresses, selectedAddress } = useUser();
+  const { navigateToScreen } = useNavigation();
+  const { favorites, savedPromoCodes, addresses, selectedAddress, dietaryPrefs } = useUser();
 
-  const favoriteRestaurants = restaurants.filter((r) => favorites.includes(r.id));
-  const totalOrders = orderHistory.length;
-  const totalSpent = orderHistory.reduce((sum, o) => sum + o.total, 0);
-  const moneySaved = orderHistory.reduce((sum, o) => sum + o.discount, 0);
+  const handleReorder = () => {
+    // Would need order history to reorder
+    navigateToScreen('home');
+  };
+
+  const toggleDietaryPref = (pref: string) => {
+    // Toggle dietary preference
+  };
+
+  const handleDeleteAddress = (id: string) => {
+    // Delete address
+  };
+
+  const formatTime = (timestamp: number) => {
+    const diff = Date.now() - timestamp;
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
+    return new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  if (orderHistory.length === 0) {
+    // Simplified - would need order history
+  }
 
   return (
-    <div className="px-5 pt-2 pb-2">
-      {/* Profile header */}
-      <div className="flex items-center gap-3.5 mb-5 mt-2">
-        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-[22px] font-bold shrink-0">
-          G
-        </div>
-        <div>
-          <h1 className="text-[20px] font-bold text-neutral-900">Welcome back!</h1>
-          <p className="text-[13px] text-neutral-500">{selectedAddress?.street || 'Set your address'}</p>
-        </div>
-      </div>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.profileHeader}>
+        <Text style={styles.profileTitle}>Profile</Text>
+      </View>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        <div className="bg-neutral-50 rounded-2xl p-3.5 text-center border border-neutral-200">
-          <ShoppingBag className="w-5 h-5 text-primary-500 mx-auto mb-1" />
-          <div className="text-[18px] font-bold text-neutral-900">{totalOrders}</div>
-          <div className="text-[11px] text-neutral-500">Orders</div>
-        </div>
-        <div className="bg-neutral-50 rounded-2xl p-3.5 text-center border border-neutral-200">
-          <TrendingUp className="w-5 h-5 text-primary-500 mx-auto mb-1" />
-          <div className="text-[18px] font-bold text-neutral-900">${totalSpent.toFixed(0)}</div>
-          <div className="text-[11px] text-neutral-500">Spent</div>
-        </div>
-        <div className="bg-neutral-50 rounded-2xl p-3.5 text-center border border-neutral-200">
-          <Award className="w-5 h-5 text-primary-500 mx-auto mb-1" />
-          <div className="text-[18px] font-bold text-neutral-900">${moneySaved.toFixed(0)}</div>
-          <div className="text-[11px] text-neutral-500">Saved</div>
-        </div>
-      </div>
+      <View style={styles.settingsSection}>
+        <TouchableOpacity style={styles.settingRow} onPress={() => navigateToScreen('orders')}>
+          <View style={styles.settingIcon}>
+            <Ionicons name="order" size={24} color="#171717" />
+          </View>
+          <View style={styles.settingText}>
+            <Text style={styles.settingTitle}>Order History</Text>
+            <Text style={styles.settingSubtitle}>See past and active orders</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={20} color="#9CA3AF" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingRow} onPress={() => navigateToScreen('orders')}>
+          <View style={styles.settingIcon}>
+            <Ionicons name="heart" size={24} color="#171717" />
+          </View>
+          <View style={styles.settingText}>
+            <Text style={styles.settingTitle}>Favorites</Text>
+            <Text style={styles.settingSubtitle}>
+              {favorites.length} saved restaurants
+            </Text>
+          </View>
+          <Ionicons name="arrow-forward" size={20} color="#9CA3AF" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingRow} onPress={() => navigateToScreen('orders')}>
+          <View style={styles.settingIcon}>
+            <Ionicons name="bookmark" size={24} color="#171717" />
+          </View>
+          <View style={styles.settingText}>
+            <Text style={styles.settingTitle}>Saved Addresses</Text>
+            <Text style={styles.settingSubtitle}>
+              {addresses?.length || 1} saved
+            </Text>
+          </View>
+          <Ionicons name="arrow-forward" size={20} color="#9CA3AF" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingRow} onPress={() => navigateToScreen('orders')}>
+          <View style={styles.settingIcon}>
+            <Ionicons name="tag" size={24} color="#171717" />
+          </View>
+          <View style={styles.settingText}>
+            <Text style={styles.settingTitle}>Promo Codes</Text>
+            <Text style={styles.settingSubtitle}>
+              {savedPromoCodes?.length || 3} available
+            </Text>
+          </View>
+          <Ionicons name="arrow-forward" size={20} color="#9CA3AF" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingRow} onPress={() => navigateToScreen('orders')}>
+          <View style={styles.settingIcon}>
+            <Ionicons name="setting" size={24} color="#171717" />
+          </View>
+          <View style={styles.settingText}>
+            <Text style={styles.settingTitle}>Settings</Text>
+            <Text style={styles.settingSubtitle}>Notifications, preferences</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={20} color="#9CA3AF" />
+        </TouchableOpacity>
+      </View>
 
-      {/* Dietary preferences */}
-      <div className="mb-5">
-        <h3 className="text-[16px] font-bold text-neutral-900 mb-2.5 flex items-center gap-2">
-          <Leaf className="w-4 h-4 text-green-500" />
-          Dietary Preferences
-        </h3>
-        <p className="text-[12px] text-neutral-500 mb-3">Filter menu items to match your diet</p>
-        <div className="flex flex-wrap gap-2">
-          {dietaryOptions.map((opt) => {
-            const isActive = dietaryPrefs.includes(opt.id);
-            return (
-              <button
-                key={opt.id}
-                onClick={() => toggleDietaryPref(opt.id)}
-                className={`px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors ${
-                  isActive
-                    ? 'bg-green-50 text-green-700 border-2 border-green-400'
-                    : 'bg-neutral-100 text-neutral-500 border-2 border-transparent'
-                }`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Favorites */}
-      <div className="mb-5">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-[16px] font-bold text-neutral-900 flex items-center gap-2">
-            <Heart className="w-4 h-4 text-primary-500" />
-            Favorites
-          </h3>
-          {favoriteRestaurants.length > 0 && (
-            <span className="text-[13px] text-neutral-500">{favoriteRestaurants.length}</span>
-          )}
-        </div>
-        {favoriteRestaurants.length > 0 ? (
-          <div className="space-y-3">
-            {favoriteRestaurants.map((r) => (
-              <StoreCard
-                key={r.id}
-                restaurant={r}
-                onClick={() => navigateToRestaurant(r.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-neutral-50 rounded-2xl p-6 text-center border border-neutral-200">
-            <Heart className="w-8 h-8 text-neutral-200 mx-auto mb-2" />
-            <p className="text-[14px] text-neutral-500">No favorites yet</p>
-            <p className="text-[12px] text-neutral-400 mt-1">Tap the heart on any restaurant to save it</p>
-            <button
-              onClick={() => navigateToScreen('home')}
-              className="mt-3 text-primary-500 font-semibold text-[13px]"
+      {dietaryPrefs?.length && (
+        <View style={styles.dietarySection}>
+          <Text style={styles.sectionTitle}>Dietary Preferences</Text>
+          {dietaryPrefs.map((pref, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={styles.dietaryTag}
             >
-              Browse Restaurants
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Settings rows */}
-      <div className="space-y-0 mb-5">
-        <button
-          onClick={() => setShowAddressPicker(true)}
-          className="w-full flex items-center gap-3 py-3.5 border-b border-neutral-100 active:bg-neutral-50 transition-colors"
-        >
-          <div className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
-            <MapPin className="w-5 h-5 text-neutral-600" />
-          </div>
-          <div className="flex-1 text-left">
-            <div className="font-semibold text-[15px] text-neutral-900">Delivery Addresses</div>
-            <div className="text-[12px] text-neutral-500">{addresses.length} saved</div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-neutral-300" />
-        </button>
-
-        <button
-          onClick={() => navigateToScreen('orders')}
-          className="w-full flex items-center gap-3 py-3.5 border-b border-neutral-100 active:bg-neutral-50 transition-colors"
-        >
-          <div className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
-            <ShoppingBag className="w-5 h-5 text-neutral-600" />
-          </div>
-          <div className="flex-1 text-left">
-            <div className="font-semibold text-[15px] text-neutral-900">Order History</div>
-            <div className="text-[12px] text-neutral-500">{totalOrders} {totalOrders === 1 ? 'order' : 'orders'}</div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-neutral-300" />
-        </button>
-
-        <div className="w-full flex items-center gap-3 py-3.5 border-b border-neutral-100">
-          <div className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
-            <Tag className="w-5 h-5 text-neutral-600" />
-          </div>
-          <div className="flex-1 text-left">
-            <div className="font-semibold text-[15px] text-neutral-900">Promo Codes</div>
-            <div className="text-[12px] text-neutral-500">WELCOME10, FREEDEL, SAVE5</div>
-          </div>
-        </div>
-
-        <div className="w-full flex items-center gap-3 py-3.5">
-          <div className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
-            <Settings className="w-5 h-5 text-neutral-600" />
-          </div>
-          <div className="flex-1 text-left">
-            <div className="font-semibold text-[15px] text-neutral-900">Settings</div>
-            <div className="text-[12px] text-neutral-500">Notifications, preferences</div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-neutral-300" />
-        </div>
-      </div>
-    </div>
+              <Text style={styles.dietaryTagText}>
+                {pref === 'vegetarian' ? 'Vegetarian' : pref === 'vegan' ? 'Vegan' : pref === 'gluten-free' ? 'Gluten-free' : 'No Nuts'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, paddingTop: 20, backgroundColor: '#F5F5F5' },
+  profileHeader: { paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
+  profileTitle: { fontSize: 24, fontWeight: '700', color: '#171717' },
+  settingsSection: { paddingHorizontal: 20, paddingBottom: 16 },
+  settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: 'white', borderRadius: 16, marginBottom: 8 },
+  settingIcon: { width: 24, height: 24 },
+  settingText: { flex: 1, marginHorizontal: 12 },
+  settingTitle: { fontSize: 15, fontWeight: '600', color: '#171717' },
+  settingSubtitle: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  dietarySection: { paddingHorizontal: 20, marginBottom: 16 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#171717', marginBottom: 12 },
+  dietaryTag: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB' },
+  dietaryTagText: { fontSize: 14, color: '#171717' },
+});
+
+export default ProfileScreen;
