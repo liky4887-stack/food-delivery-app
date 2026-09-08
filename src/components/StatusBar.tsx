@@ -10,7 +10,7 @@ export function StatusBar() {
       <View style={styles.icons}>
         <MaterialCommunityIcons name="signal" size={14} color="#171717" style={styles.icon} />
         <MaterialCommunityIcons name="wifi" size={14} color="#171717" style={styles.icon} />
-        <MaterialCommunityIcons name="battery-variant" size={16} color="#171717" style={styles.icon} />
+        <MaterialCommunityIcons name="battery" size={16} color="#171717" style={styles.icon} />
       </View>
       <ExpoStatusBar style="dark" />
     </View>

@@ -25,7 +25,7 @@ export function DietaryBadges({ tags, size = 'sm' }: DietaryBadgesProps) {
         const config = tagColors[tag];
         return config ? (
           <View key={tag} style={[styles.badge, { backgroundColor: config.bg }]}>
-            <MaterialCommunityIcons name={config.icon} size={size === 'xs' ? 12 : 14} color={config.color} />
+            <MaterialCommunityIcons name={config.icon as any} size={size === 'xs' ? 12 : 14} color={config.color} />
             <Text style={[styles.tagText, { color: config.color }, size === 'xs' && styles.tagTextXSmall]}>
               {tag === 'vegetarian' ? 'Veg' : tag === 'vegan' ? 'Vegan' : tag === 'gluten-free' ? 'GF' : tag === 'no-dairy' ? 'No Dairy' : 'No Nuts'}
             </Text>

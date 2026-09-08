@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useUser } from '../context/NavigationContext';
+import { useNavigation } from '../context/NavigationContext';
+import { useUser } from '../context/UserContext';
 
 export function ProfileScreen() {
   const { navigateToScreen } = useNavigation();
-  const { favorites, savedPromoCodes, addresses, selectedAddress, dietaryPrefs } = useUser();
+  const { favorites, savedPromoCodes, addresses, orderHistory, selectedAddress, dietaryPrefs } = useUser();
 
   const handleReorder = () => {
     // Would need order history to reorder
@@ -41,7 +42,7 @@ export function ProfileScreen() {
       <View style={styles.settingsSection}>
         <TouchableOpacity style={styles.settingRow} onPress={() => navigateToScreen('orders')}>
           <View style={styles.settingIcon}>
-            <Ionicons name="order" size={24} color="#171717" />
+            <Ionicons name="receipt" size={24} color="#171717" />
           </View>
           <View style={styles.settingText}>
             <Text style={styles.settingTitle}>Order History</Text>
@@ -75,7 +76,7 @@ export function ProfileScreen() {
         </TouchableOpacity>
         <TouchableOpacity style={styles.settingRow} onPress={() => navigateToScreen('orders')}>
           <View style={styles.settingIcon}>
-            <Ionicons name="tag" size={24} color="#171717" />
+            <Ionicons name="pricetag" size={24} color="#171717" />
           </View>
           <View style={styles.settingText}>
             <Text style={styles.settingTitle}>Promo Codes</Text>
@@ -87,7 +88,7 @@ export function ProfileScreen() {
         </TouchableOpacity>
         <TouchableOpacity style={styles.settingRow} onPress={() => navigateToScreen('orders')}>
           <View style={styles.settingIcon}>
-            <Ionicons name="setting" size={24} color="#171717" />
+            <Ionicons name="settings" size={24} color="#171717" />
           </View>
           <View style={styles.settingText}>
             <Text style={styles.settingTitle}>Settings</Text>

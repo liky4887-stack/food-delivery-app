@@ -65,7 +65,7 @@ export function HomeScreen() {
 
       <View style={styles.actionRow}>
         <TouchableOpacity style={styles.actionButtonDashPass}>
-          <Ionicons name="crown" size={16} color="white" />
+          <Ionicons name={"crown" as any} size={16} color="white" />
           <Text style={styles.actionButtonDashPassText}>DashPass</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButtonSecondary}>
