@@ -22,5 +22,5 @@
     },
     "types": ["expo", "react", "react-native"]
   },
-  "include": ["src/**/*", "App.tsx", "app/**/*"]
+  "include": ["src/**/*", "index.js"]
 }
