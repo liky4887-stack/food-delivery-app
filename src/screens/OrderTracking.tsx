@@ -57,7 +57,7 @@ export function OrderTracking({ order }: { order: PastOrder }) {
       <View style={styles.header}>
         {/* Status circle */}
         <View style={[styles.statusCircle, { backgroundColor: stage >= 3 ? '#10B981' : stage >= 2 ? '#F59E0B' : stage >= 1 ? '#FF2B2B' : '#6B7280' }]}>
-          {stages[stage].icon ? <stages[stage].icon name={stages[stage].iconName} size={32} color={stages[stage].color} /> : null}
+          {stages[stage].icon ? React.createElement(stages[stage].icon, { name: stages[stage].iconName, size: 32, color: stages[stage].color }) : null}
         </View>
         <Text style={styles.statusLabel}>{stageLabels[stage]}</Text>
 

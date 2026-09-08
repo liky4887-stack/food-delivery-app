@@ -80,6 +80,7 @@ function App() {
                   <Tab.Screen name="Profile" component={ProfileScreen} />
                 </Tab.Navigator>
               </NavigationContainer>
+            </ToastProvider>
             </UserProvider>
           </CartProvider>
         </NavigationProvider>
